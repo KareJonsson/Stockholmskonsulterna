@@ -1,0 +1,88 @@
+<project name="Generics_J2SE" default="recompile+jar" basedir=".">
+	
+	<import file="../../reuseant/thirdparty.xml"/>
+	<import file="../../reuseant/backuparea.xml"/>
+	<import file="libraries.xml"/>
+
+	<property name="jarname" value="genericsj2se"/>
+	<property name="javacc.home" value="${thirdparty}/javacc-4.2"/>
+
+	<!-- VARIABLES -->
+	<property name="home" location=".."/>
+
+	<property name="classes" value="${home}/classes"/>
+	<property name="src" value="${home}/src"/>
+	<property name="ant" value="${home}/ant"/>
+	<property name="lib" value="${home}/lib"/>
+	<property name="dist" value="${home}/dist"/>
+
+	<!-- TARGETS -->
+	<target name="init">
+		<tstamp/>
+		<mkdir dir="${classes}\se"/>
+		<mkdir dir="${dist}"/>
+	</target>
+
+	<target name="clean" depends="init">
+		<delete file="${src}/se/modlab/generics/sstruct/tables/TabParser.java" />
+		<delete file="${src}/se/modlab/generics/sstruct/tables/TabParserTokenManager.java" />
+		<delete file="${src}/se/modlab/generics/sstruct/tables/TabParserConstants.java" />
+		<delete file="${src}/se/modlab/generics/sstruct/tables/Token.java" />
+		<delete file="${src}/se/modlab/generics/sstruct/tables/TokenMgrError.java" />
+		<delete file="${src}/se/modlab/generics/sstruct/tables/ParseException.java" />
+		<delete dir="${classes}/se"/>
+		<delete file="${dist}/${jarname}.jar" />
+	</target>
+
+	
+	<target name="Compile-tables-compiler" description="compile the compiler">    
+	    <echo message="Compiling files in ${src}/se/modlab/generics/sstruct/tables/"/>    
+	    <java classpath="${javacc.home}/bin/lib/javacc.jar" 
+	          fork="true"
+	          dir="${src}/se/modlab/generics/sstruct/tables/"
+	          classname="javacc">
+	      <arg value="TabParser.jj"/>
+	    </java>
+	</target>
+
+	<target name="compile" depends="init">
+		<javac
+			srcdir="${src}" destdir="${classes}"
+			compiler="modern" source="1.6" debug="on" encoding="ISO-8859-1">
+			<classpath refid="buildjars" />
+		</javac>
+	</target>
+
+		
+	<target name="recompile" depends="clean, init, Compile-tables-compiler, compile"/>
+
+	<target name="jar" depends="recompile" description="Packages the ${jarname} jar">
+		<echo message="Packaging the ${jarname} jar...." />
+		<delete file="${dist}/${jarname}.jar" />
+		<jar jarfile="${dist}/${jarname}.jar">
+			<fileset dir="${classes}" includes="**" />
+		</jar>
+	</target>
+
+	<target name="backup-src" depends="" description="Puts source in zip on Dropbox area">
+		<echo message="Backup...." />
+		<delete file="${backuparea}/${jarname}_src.zip" />
+		<jar jarfile="${backuparea}/${jarname}_src.zip">
+			<fileset dir="${src}" includes="**" />
+		</jar>
+	</target>
+
+	<target name="backup-ant" depends="" description="Puts source in zip on Dropbox area">
+		<echo message="Backup...." />
+		<delete file="${backuparea}/${jarname}_ant.zip" />
+		<jar jarfile="${backuparea}/${jarname}_ant.zip">
+			<fileset dir="${ant}" includes="**" />
+		</jar>
+	</target>
+
+	<target name="backup-all" depends="backup-src, backup-ant"/>
+	
+	<target name="recompile+jar" depends="recompile, jar"/>
+
+</project>
+

@@ -1,0 +1,15 @@
+<project name="libraries" basedir=".">
+    <!-- Libraries needed -->
+    <path id="buildjars">
+        <pathelement path="../../Simple_IDE/dist/simpleide.jar"/>
+        <pathelement path="../../Simple_IDE_plugins/dist/simpleideplugins.jar"/>
+        <pathelement path="../../Crypto/dist/crypto.jar"/>
+        <pathelement path="../../JRobin_for_Simplesim/lib/jrobin-1.5.4.jar"/>
+        <pathelement path="../../JRobin_for_Simplesim/lib/inspector-1.5.4.jar"/>
+        <pathelement path="../../Tables_for_Simplesim/dist/tables.jar"/>
+        <pathelement path="/Users/karejonsson/program/eclipse/thirdparty/hsqldb/lib/hsqldb.jar"/>
+        <pathelement path="/Users/karejonsson/program/eclipse/thirdparty/hsqldb/lib/sqltool.jar"/>
+        <pathelement path="../../Simple_IDE/dist/simpleide.jar"/>
+    </path>
+
+</project>

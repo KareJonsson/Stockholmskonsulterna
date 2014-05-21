@@ -1,0 +1,9 @@
+<project name="libraries" basedir=".">
+	
+	<import file="../../reuseant/thirdparty.xml"/>
+	
+    <!-- Libraries needed -->
+    <path id="buildjars">
+    </path>
+
+</project>

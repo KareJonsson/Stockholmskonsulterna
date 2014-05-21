@@ -1,0 +1,654 @@
+
+options {
+  JAVA_UNICODE_ESCAPE = true;
+  STATIC = false;
+}
+
+PARSER_BEGIN(TabParser)
+
+package se.modlab.generics.sstruct.tables;
+
+import se.modlab.generics.files.*;
+import java.util.*;
+import java.io.*;
+import se.modlab.generics.sstruct.values.*;
+import se.modlab.generics.exceptions.*;
+
+public class TabParser
+{
+
+  //private static File motherCatalogue = null;
+  //private static Vector files = null;
+  private datetimeHandler dth;
+  private static String lastFilename = null;
+
+  public static void main(String [] args) 
+  {
+    if(args.length != 1) {
+      System.out.println("Ett argument (och det skall vara en fil)");
+      return;
+    }
+    try 
+    {
+      parseFromFilename(args[0]);
+    }
+    catch(intolerableException e)
+    { 
+      System.out.println(e.toString());
+    }
+  }
+
+/*
+  public static void setMotherCatalogue(File f)
+  {
+    if(f == null) return;
+    motherCatalogue = f;
+    //files = new Vector();
+    //System.out.println("TabParser.setMotherCatalogue sets "+f.getAbsolutePath());
+  }
+
+  public static File getMotherCatalogue()
+  {
+    if(motherCatalogue == null) return new File(System.getProperty("user.dir"));
+    return motherCatalogue;
+  }
+*/
+
+  public static table parseFromFilename(String filename)
+    throws intolerableException 
+  {
+	try {
+    	lastFilename = filename;
+    	return parseFromInputStream(new FileInputStream(motherCatalogue.getCatalogue().getAbsolutePath()+File.separator+filename), null);
+	}
+	catch(FileNotFoundException fnfe) {
+		throw new internalError("File "+filename+" was not found.", fnfe);
+	}
+  }
+
+  public static table parseFromFilename(String filename, datetimeHandler dth)
+    throws intolerableException 
+  {
+    lastFilename = filename;
+    fileCollector fc = null;
+    try
+    {
+      //fc = new fileCollector(System.getProperty("user.dir")+filename);
+      //File f = fc.getFile();
+      String filesPath = motherCatalogue.getCatalogue().getAbsolutePath()+File.separator+filename;
+      //System.out.println("Verklig fil = "+filesPath);
+      fc = new fileCollector(filesPath);
+      if(!fc.getOk()) throw fc.getException();
+      //files.addElement(fc);
+      //System.out.println("Fil att parsea \n"+fc.getFilecontents());
+      return parse(new ByteArrayInputStream(fc.getFilecontents().getBytes()), 
+                   fc,
+                   dth);
+    }
+    catch(intolerableException ie)
+    {
+      if(fc != null) ie.setCollectors(new fileCollector[] { fc });
+      throw ie;
+    }
+    catch(FileNotFoundException fnfe)
+    { 
+      intolerableException ie = new systemError("File not found", fnfe);
+      if(fc != null) ie.setCollectors(new fileCollector[] { fc });
+      throw ie;
+    }
+    catch(IOException ioe)
+    {
+      intolerableException ie = new systemError("I/O error", ioe);
+      if(fc != null) ie.setCollectors(new fileCollector[] { fc });
+      throw ie;
+    }
+    catch(NumberFormatException nfe)
+    {
+      intolerableException ie = new UserCompiletimeError("Number format error in table read as separated list.", nfe);
+      if(fc != null) ie.setCollectors(new fileCollector[] { fc });
+      throw ie;
+    }
+    catch(OutOfMemoryError oome)
+    {
+      intolerableException ie = new systemError("Out of memory error in table read as separated list.", oome);
+      if(fc != null) ie.setCollectors(new fileCollector[] { fc });
+      throw ie;
+    }
+    catch(Exception e)
+    {
+      intolerableException ie = new unclassedError("TabParser.parseFromFile - Exception", e);
+      if(fc != null) ie.setCollectors(new fileCollector[] { fc });
+      throw ie;
+    }
+  }
+
+  public static table parseFromInputStream(InputStream is, datetimeHandler dth)
+    throws intolerableException 
+  {
+    return parse(is, new fileCollector("Editor window", "stream"), dth);
+  }
+
+  public static table parseFromString(String program)
+    throws intolerableException 
+  {
+    lastFilename = "Editor window";
+    return parseFromString(program, null);
+  }
+
+  public static table parseFromFile(File f, datetimeHandler dth)
+    throws intolerableException 
+  {
+    lastFilename = "Editor window";
+    try {
+    	return parse(new FileInputStream(f), new fileCollector(f.getName(), "stream"), dth);
+    }
+    catch(FileNotFoundException fnfe) {
+     	throw new UserCompiletimeError("No such file "+f.getName(), fnfe);
+    }
+  }
+
+  public static table parseFromString(String program, datetimeHandler dth)
+    throws intolerableException 
+  {
+    lastFilename = "Editor window";
+    return parse(new ByteArrayInputStream(program.getBytes()), 
+                 new fileCollector("No name", program),
+                 dth);
+  }
+
+  public void setDatetimeHandler(datetimeHandler _dth)
+  {
+    dth = _dth;
+  }
+
+  private static table parse(InputStream is, 
+                             fileCollector fc,
+                             datetimeHandler dth) 
+    throws intolerableException 
+  {
+    TabParser parser = new TabParser(is);
+    if(dth != null)
+    {
+      parser.setDatetimeHandler(dth);
+    }
+    else
+    {
+      parser.setDatetimeHandler(new defaultDatetimeHandler());
+    }
+    try
+    {
+      table t = parser.parseTable();
+      t.setCollector(fc);
+      return t;
+    } 
+    catch(intolerableException ie)
+    {
+      throw ie;
+    }
+    catch(ParseException e)
+    {
+      throw new UserCompiletimeError("Syntax error i table read as separated list.", e);
+    }
+    catch(TokenMgrError tme)
+    {
+      throw new UserCompiletimeError("Lexical error in table read as separated list.", tme);
+    }
+    catch(NumberFormatException nfe)
+    {
+      throw new UserCompiletimeError("Number format error in table read as separated list.", nfe);
+    }
+    catch(OutOfMemoryError oome)
+    {
+      throw new systemError("Out of memory error in table read as separated list.", oome);
+    }
+    catch(Exception e)
+    {
+      throw new unclassedError("Undiagnosticised error in table reading.", e);
+    }
+  }
+
+  public static boolean parseDatetimeFromString(String program)
+    throws intolerableException 
+  {
+    lastFilename = "Editor window";
+    return parseDatetimeFromString(program, null);
+  }
+
+  public static boolean parseDatetimeFromString(String program, datetimeHandler dth)
+    throws intolerableException 
+  {
+    lastFilename = "Editor window";
+    return parseDatetime(new ByteArrayInputStream(program.getBytes()), 
+                 new fileCollector("No name", program),
+                 dth);
+  }
+
+  public static boolean parseStringFromString(String aString)
+    throws intolerableException 
+  {
+    lastFilename = "Editor window";
+    return parseStringFromString(aString, null);
+  }
+
+  public static boolean parseStringFromString(String aString, datetimeHandler dth)
+    throws intolerableException 
+  {
+    lastFilename = "Editor window";
+    return parseString(new ByteArrayInputStream(aString.getBytes()), 
+                 new fileCollector("No name", aString),
+                 dth);
+  }
+
+  private static boolean parseDatetime(InputStream is, 
+                                     fileCollector fc,
+                                     datetimeHandler dth) 
+    throws intolerableException 
+  {
+    TabParser parser = new TabParser(is);
+    if(dth != null)
+    {
+      parser.setDatetimeHandler(dth);
+    }
+    else
+    {
+      parser.setDatetimeHandler(new defaultDatetimeHandler());
+    }
+    try
+    {
+      return parser.parseDatetime();
+    } 
+    catch(intolerableException ie)
+    {
+      throw ie;
+    }
+    catch(ParseException e)
+    {
+      throw new UserCompiletimeError("Syntax error i table read as separated list.", e);
+    }
+    catch(TokenMgrError tme)
+    {
+      throw new UserCompiletimeError("Lexical error in table read as separated list.", tme);
+    }
+    catch(NumberFormatException nfe)
+    {
+      throw new UserCompiletimeError("Number format error in table read as separated list.", nfe);
+    }
+    catch(OutOfMemoryError oome)
+    {
+      throw new systemError("Out of memory error in table read as separated list.", oome);
+    }
+    catch(Exception e)
+    {
+      throw new unclassedError("Undiagnosticised error in table reading.", e);
+    }
+  }
+
+  private static boolean parseString(InputStream is, 
+                                     fileCollector fc,
+                                     datetimeHandler dth) 
+    throws intolerableException 
+  {
+    TabParser parser = new TabParser(is);
+    if(dth != null)
+    {
+      parser.setDatetimeHandler(dth);
+    }
+    else
+    {
+      parser.setDatetimeHandler(new defaultDatetimeHandler());
+    }
+    try
+    {
+      return parser.parseStringValue();
+    } 
+    catch(intolerableException ie)
+    {
+      throw ie;
+    }
+    catch(ParseException e)
+    {
+      throw new UserCompiletimeError("Syntax error i table read as separated list.", e);
+    }
+    catch(TokenMgrError tme)
+    {
+      throw new UserCompiletimeError("Lexical error in table read as separated list.", tme);
+    }
+    catch(NumberFormatException nfe)
+    {
+      throw new UserCompiletimeError("Number format error in table read as separated list.", nfe);
+    }
+    catch(OutOfMemoryError oome)
+    {
+      throw new systemError("Out of memory error in table read as separated list.", oome);
+    }
+    catch(Exception e)
+    {
+      throw new unclassedError("Undiagnosticised error in table reading.", e);
+    }
+  }
+
+}
+
+PARSER_END(TabParser)
+
+
+/* WHITE SPACE */
+
+SKIP :
+{
+  " "
+| "\t"
+| "\r"
+| "\f"
+}
+
+/* RESERVED WORDS AND LITERALS */
+
+TOKEN :
+{
+    <TRUE: "true" | "TRUE" | "True">
+  | <FALSE: "false" | "FALSE" | "False">
+  | <LINEFEED: "\n">
+  | <DELIMITER: [":", ";"]>
+}
+
+/* LITERALS */
+
+TOKEN :
+{
+  < INTEGER_LITERAL:
+        <DECIMAL_LITERAL> (["l","L"])?
+      | <HEX_LITERAL> (["l","L"])?
+      | <OCTAL_LITERAL> (["l","L"])?
+  >
+|
+  < #DECIMAL_LITERAL: ("-")? ["1"-"9"] (["0"-"9"])* >
+|
+  < #HEX_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+ >
+|
+  < #OCTAL_LITERAL: "0" (["0"-"7"])* >
+|
+  < FLOATING_POINT_LITERAL_CORRECT:
+        ("-")? (["0"-"9"])+ "." (["0"-"9"])* (<EXPONENT>)? (["f","F","d","D"])?
+      | "." (["0"-"9"])+ (<EXPONENT>)? (["f","F","d","D"])?
+      | (["0"-"9"])+ <EXPONENT> (["f","F","d","D"])?
+      | (["0"-"9"])+ (<EXPONENT>)? ["f","F","d","D"]
+  >
+|
+  < FLOATING_POINT_LITERAL_MICROSOFT:
+        ("-")? (["0"-"9"])+ ([".", ","]) (["0"-"9"])* (<EXPONENT>)? (["f","F","d","D"])?
+      | ([".", ","]) (["0"-"9"])+ (<EXPONENT>)? (["f","F","d","D"])?
+      | (["0"-"9"])+ <EXPONENT> (["f","F","d","D"])?
+      | (["0"-"9"])+ (<EXPONENT>)? ["f","F","d","D"]
+  >
+|
+  < #EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+ >
+|
+  < CHARACTER_LITERAL:
+      "'"
+      (   (~["'","\\","\n","\r"])
+        | ("\\"
+            ( ["n","t","b","r","f","\\","'","\""]
+            | ["0"-"7"] ( ["0"-"7"] )?
+            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+            )
+          )
+      )
+      "'"
+  >
+|
+  < STRING_LITERAL:
+    (
+      "\'"
+      (   (~["\"","\\","\n","\r"])
+        | ("\\"
+            ( ["n","t","b","r","f","\\","'","\""]
+            | ["0"-"7"] ( ["0"-"7"] )?
+            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+            )
+          )
+      )*
+      "\'"
+    |
+      "\""
+      (   (~["\"","\\","\n","\r"])
+        | ("\\"
+            ( ["n","t","b","r","f","\\","'","\""]
+            | ["0"-"7"] ( ["0"-"7"] )?
+            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+            )
+          )
+      )*
+      "\""
+    )
+  >
+|
+  < DATETIME_LITERAL_CORRECT:
+     ["1"-"2"] ["0"-"9"] ["0"-"9"] ["0"-"9"] // year
+     "/"
+     (["0"-"1"])? ["0"-"9"]                     // month
+     "/"
+     (["0"-"3"])* ["0"-"9"]                     // day
+     ((" ")*
+      (["0"-"2"])? ["0"-"9"]                  // Hours
+      (" ")* (":") (" ")* 
+      ["0"-"5"] ["0"-"9"]                     // Minutes
+      ((" ")* (":") (" ")* 
+       ["0"-"5"] ["0"-"9"])?)?                  // Seconds
+   >
+|
+  < DATETIME_LITERAL_MICROSOFT:
+     ["1"-"2"] ["0"-"9"] ["0"-"9"] ["0"-"9"] // year
+     (["/","-"])
+     (["0"-"1"])? ["0"-"9"]                     // month
+     (["/","-"])
+     (["0"-"3"])* ["0"-"9"]                     // day
+     ((" ")*
+      (["0"-"2"])? ["0"-"9"]                  // Hours
+      (" ")* (":") (" ")* 
+      ["0"-"5"] ["0"-"9"]                     // Minutes
+      ((" ")* (":") (" ")* 
+       ["0"-"5"] ["0"-"9"])?)?                  // Seconds
+   >
+}
+
+/**********************************************************
+ * THE COMMA SEPARATED TABLE LANGUAGE GRAMMAR STARTS HERE *
+ **********************************************************/
+
+boolean parseDatetime() 
+  throws intolerableException :
+{
+  holder h = null;
+}
+{
+  h = parseDatetimeValue() 
+  {
+    return h != null;
+  }
+}
+
+table parseTable() 
+  throws intolerableException :
+{
+  table tab = null;
+  line l = null;
+}
+{
+  l = parseOneLine() 
+  {
+    tab = new table(l);
+  }
+  ( 
+    l = parseOneLine() 
+    {
+      tab.addLine(l);
+    }
+  )*
+  //<EOF> 
+  {
+    return tab;
+  }
+}
+
+line parseOneLine() 
+  throws intolerableException :
+{
+  holder val = null;
+  line l = null;
+}
+{
+  (
+    <DELIMITER>
+    {
+      if(val == null)
+      {
+        holder _val = new voidHolder(null, -1, -1);
+        if(l == null)
+        {
+          l = new line(_val);
+        }
+        else
+        {
+          l.addValue(_val);
+        }
+      }
+      else
+      {
+        val = null;
+      }
+    }
+  |
+    val = parseAnyValueForced()
+    {
+      if(l == null)
+      {
+        l = new line(val);
+      }
+      else
+      {
+        l.addValue(val);
+      }
+    }
+  )* 
+  <LINEFEED>
+  {
+    //System.out.println("Rader "+l.getNoValues());
+    if(l == null) return new line(null);
+    if(val == null) l.addValue(new voidHolder(null, -1, -1));
+    return l;
+  }
+}
+
+holder parseAnyValueForced() 
+  throws intolerableException :
+{
+  holder val = null;
+}
+{
+  ( 
+    val = parseBooleanValue()
+  | 
+    val = parseIntegerValue()
+  | 
+    val = parseFloatValue()
+  | 
+    val = parseDatetimeValue()
+  | 
+    val = parseStringValue()
+  )
+  {
+    return val;
+  }
+}
+
+booleanHolder parseBooleanValue() 
+  throws intolerableException :
+{
+  Token t = null;
+}
+{
+  ( 
+    t=<TRUE> 
+    {
+      return new booleanHolder(true, t.beginLine, t.beginColumn);
+    }
+  | 
+    t=<FALSE> 
+    {
+      return new booleanHolder(false, t.beginLine, t.beginColumn);
+    }
+  )
+}
+
+longHolder parseIntegerValue() 
+  throws intolerableException :
+{
+  Token t = null;
+}
+{
+  t=<INTEGER_LITERAL> 
+  {
+    long l = Long.parseLong(t.image);
+    return new longHolder(l, t.beginLine, t.beginColumn);
+  }
+}
+
+doubleHolder parseFloatValue() 
+  throws intolerableException :
+{
+  Token t = null;
+  double d;
+}
+{
+  (
+    t=<FLOATING_POINT_LITERAL_CORRECT> 
+    {
+      d = Double.parseDouble(t.image);
+      return new doubleHolder(d, t.beginLine, t.beginColumn);
+    }
+  |
+    t=<FLOATING_POINT_LITERAL_MICROSOFT> 
+    {
+      d = Double.parseDouble(t.image.replace(',', '.'));
+      return new doubleHolder(d, t.beginLine, t.beginColumn);
+    }
+  )
+}
+
+holder parseDatetimeValue() 
+  throws intolerableException :
+{
+  Token t = null;
+}
+{
+  (
+    t=<DATETIME_LITERAL_CORRECT> 
+    {
+      return dth.getHolder(t.image, t.beginLine, t.beginColumn);
+    }
+  |
+    t=<DATETIME_LITERAL_MICROSOFT> 
+    {
+      return dth.getHolder(t.image.replace('-', '/'), t.beginLine, t.beginColumn);
+    }
+  )
+}
+
+stringHolder parseStringValue()
+  throws intolerableException :
+{
+  Token t = null;
+}
+{ 
+  ( 
+    t=<STRING_LITERAL> 
+  | 
+    t=<CHARACTER_LITERAL> 
+  )
+  {
+    return new stringHolder(t.image, t.beginLine, t.beginColumn);
+  }
+}
+
+

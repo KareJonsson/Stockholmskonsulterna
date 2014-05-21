@@ -1,0 +1,169 @@
+<project name="Generics_J2SE" default="recompile+jar" basedir=".">
+	
+	<import file="libraries.xml" />
+
+	<property name="jarname" value="genericsj2se"/>
+	<property name="javacc.home" value="/Users/karejonsson/program/eclipse/thirdparty/javacc-4.2"/>
+	<property name="backuparea" value="/Users/karejonsson/Dropbox/projekt"/>
+
+	<!-- VARIABLES -->
+	<property name="home" location=".."/>
+	<!-- <property name="build" location="${home}/build"/> -->
+
+	<property name="classes" value="${home}/classes"/>
+	<property name="src" value="${home}/src"/>
+	<property name="lib" value="${home}/lib"/>
+	<property name="dist" value="${home}/dist"/>
+
+	<!-- TARGETS -->
+	<target name="init">
+		<tstamp/>
+		<mkdir dir="${classes}\se"/>
+		<mkdir dir="${dist}"/>
+	</target>
+
+	<target name="clean" depends="init">
+		<delete file="${src}/se/modlab/generics/sstruct/tables/TabParser.java" />
+		<delete file="${src}/se/modlab/generics/sstruct/tables/TabParserTokenManager.java" />
+		<delete file="${src}/se/modlab/generics/sstruct/tables/TabParserConstants.java" />
+		<delete file="${src}/se/modlab/generics/sstruct/tables/Token.java" />
+		<delete file="${src}/se/modlab/generics/sstruct/tables/TokenMgrError.java" />
+		<delete file="${src}/se/modlab/generics/sstruct/tables/ParseException.java" />
+		<delete dir="${classes}/se"/>
+		<delete file="${dist}/${jarname}.jar" />
+	</target>
+
+	<property name="illustrationpath" value="se/modlab/simplesim/algorithms/illustrate/parse/"/>
+	<property name="guiapppath" value="se/modlab/simplesim/guiembedd/parse/"/>
+	<property name="simplesimpath" value="se/modlab/simplesim/parse/"/>
+
+	<target name="clean-ss" depends="init">
+		<delete file="${src}/${illustrationpath}/JavaCharStream.java" />
+		<delete file="${src}/${illustrationpath}/IluParser.java" />
+		<delete file="${src}/${illustrationpath}/IluParserTokenManager.java" />
+		<delete file="${src}/${illustrationpath}/IluParserConstants.java" />
+		<delete file="${src}/${illustrationpath}/Token.java" />
+		<delete file="${src}/${illustrationpath}/TokenMgrError.java" />
+		<delete file="${src}/${illustrationpath}/ParseException.java" />
+		<delete file="${src}/${simplesimpath}/JavaCharStream.java" />
+		<delete file="${src}/${simplesimpath}/SimParser.java" />
+		<delete file="${src}/${simplesimpath}/SimParserTokenManager.java" />
+		<delete file="${src}/${simplesimpath}/SimParserConstants.java" />
+		<delete file="${src}/${simplesimpath}/Token.java" />
+		<delete file="${src}/${simplesimpath}/TokenMgrError.java" />
+		<delete file="${src}/${simplesimpath}/ParseException.java" />
+		<delete file="${src}/${guiapppath}/JavaCharStream.java" />
+		<delete file="${src}/${guiapppath}/GuiappParser.java" />
+		<delete file="${src}/${guiapppath}/GuiappParserTokenManager.java" />
+		<delete file="${src}/${guiapppath}/GuiappParserConstants.java" />
+		<delete file="${src}/${guiapppath}/Token.java" />
+		<delete file="${src}/${guiapppath}/TokenMgrError.java" />
+		<delete file="${src}/${guiapppath}/ParseException.java" />
+		<delete dir="${classes}/se"/>
+		<delete file="${dist}/${jarname}.jar" />
+	</target>
+
+	<target name="clean-ga" depends="init">
+		<delete file="${src}/se/modlab/gdbapp/parse/GdbappConfigParser.java" />
+		<delete file="${src}/se/modlab/gdbapp/parse/GdbappConfigParserTokenManager.java" />
+		<delete file="${src}/se/modlab/gdbapp/parse/GdbappConfigParserConstants.java" />
+		<delete file="${src}/se/modlab/gdbapp/parse/Token.java" />
+		<delete file="${src}/se/modlab/gdbapp/parse/TokenMgrError.java" />
+		<delete file="${src}/se/modlab/gdbapp/parse/ParseException.java" />
+		<delete file="${src}/se/modlab/gdbapp/parse/JavaCharStream.java" />
+		<delete dir="${bin}"/>
+		<delete dir="${classes}/se"/>
+		<delete file="${dist}/${jarname}.jar" />
+	</target>
+	
+	<property name="gdbapppath" value="se/modlab/gdbapp/parse/"/>
+
+	<target name="Compile-GdbappConfig-compiler" description="compile the compiler">    
+	    <echo message="Compiling files in ${src}/${gdbapppath}"/>    
+	    <java classpath="${javacc.home}/bin/lib/javacc.jar" 
+	          fork="true"
+	          dir="${src}/${gdbapppath}"
+	          classname="javacc">
+	      <arg value="GdbappConfigParser.jj"/>
+	    </java>
+ 	</target>
+	
+	<target name="Compile-tables-compiler" description="compile the compiler">    
+	    <echo message="Compiling files in ${src}/se/modlab/generics/sstruct/tables/"/>    
+	    <java classpath="${javacc.home}/bin/lib/javacc.jar" 
+	          fork="true"
+	          dir="${src}/se/modlab/generics/sstruct/tables/"
+	          classname="javacc">
+	      <arg value="TabParser.jj"/>
+	    </java>
+	</target>
+
+	<target name="Compile-Illustration-compiler" description="compile the compiler">    
+	    <echo message="Compiling files in ${src}/${illustrationpath}"/>    
+	    <java classpath="${javacc.home}/bin/lib/javacc.jar" 
+	          fork="true"
+	          dir="${src}/${illustrationpath}"
+	          classname="javacc">
+	      <arg value="IluParser.jj"/>
+	    </java>
+	  </target>
+
+	<target name="Compile-Guiapp-compiler" description="compile the compiler">    
+	    <echo message="Compiling files in ${src}/${guiapppath}"/>    
+	    <java classpath="${javacc.home}/bin/lib/javacc.jar" 
+	          fork="true"
+	          dir="${src}/${guiapppath}"
+	          classname="javacc">
+	      <arg value="GuiappParser.jj"/>
+	    </java>
+	  </target>
+
+	<target name="Compile-Simplesim-compiler" description="compile the compiler">    
+	    <echo message="Compiling files in ${src}/${simplesimpath}"/>    
+	    <java classpath="${javacc.home}/bin/lib/javacc.jar" 
+	          fork="true"
+	          dir="${src}/${simplesimpath}"
+	          classname="javacc">
+	      <arg value="SimParser.jj"/>
+	    </java>
+	  </target>
+<!--
+	<target name="compile" depends="">
+	    <echo message="Compiling the .java files ${src} to ${classes}"/>    
+		<javac
+			srcdir="${src}" destdir="${classes}"
+			compiler="modern" source="1.5" debug="on" encoding="ISO-8859-1">
+		</javac>
+	</target>
+ -->
+	<target name="compile" depends="init">
+		<javac
+			srcdir="${src}" destdir="${classes}"
+			compiler="modern" source="1.6"  debug="on" encoding="ISO-8859-1">
+			<classpath refid="buildjars" />
+		</javac>
+	</target>
+
+		
+	<target name="recompile" depends="clean, init, clean-ga, Compile-GdbappConfig-compiler, Compile-tables-compiler, clean-ss, Compile-Illustration-compiler, Compile-Simplesim-compiler, Compile-Guiapp-compiler, compile"/>
+
+	<target name="jar" depends="recompile" description="Packages the ${jarname} jar">
+		<echo message="Packaging the ${jarname} jar...." />
+		<delete file="${dist}/${jarname}.jar" />
+		<jar jarfile="${dist}/${jarname}.jar">
+			<fileset dir="${classes}" includes="**" />
+		</jar>
+	</target>
+
+	<target name="backup" depends="" description="Puts source in zip on Dropbox area">
+		<echo message="Backup...." />
+		<delete file="${backuparea}/${jarname}_src.zip" />
+		<jar jarfile="${backuparea}/${jarname}_src.zip">
+			<fileset dir="${src}" includes="**" />
+		</jar>
+	</target>
+
+	<target name="recompile+jar" depends="recompile, jar"/>
+
+</project>
+
