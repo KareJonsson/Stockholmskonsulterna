@@ -86,10 +86,12 @@ public class ZippedFilesystemHierarchy extends HierarchyBranch {
 			try {
 				zipentry = zis.getNextEntry();
 				if (zipentry == null) {
+					zis.close();
 					throw new Exception("Theme bundle should be a zip file");
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
+				zis.close();
 				return;
 			}
 
@@ -114,6 +116,7 @@ public class ZippedFilesystemHierarchy extends HierarchyBranch {
 				}
 				zipentry = zis.getNextEntry();
 			}
+			zis.close();
 		}
 		catch(Exception e) {
 			e.printStackTrace();
