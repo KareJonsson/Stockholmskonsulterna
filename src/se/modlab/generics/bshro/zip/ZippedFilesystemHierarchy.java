@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
 import se.modlab.generics.bshro.ifc.HierarchyBranch;
 import se.modlab.generics.bshro.ifc.HierarchyLeaf;
 import se.modlab.generics.bshro.ifc.HierarchyObject;
