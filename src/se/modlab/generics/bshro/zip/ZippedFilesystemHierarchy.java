@@ -1,6 +1,7 @@
 package se.modlab.generics.bshro.zip;
 
 // Skriver detta i iss53
+// En rad till i iss53
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
