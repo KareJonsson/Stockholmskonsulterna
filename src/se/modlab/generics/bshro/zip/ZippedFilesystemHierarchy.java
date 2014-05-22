@@ -1,5 +1,8 @@
 package se.modlab.generics.bshro.zip;
 
+// Lägger till detta i master. Motsvarar C4 i exemplet
+// Nu är jag i hotfix på riktigt
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
